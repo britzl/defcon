@@ -1,0 +1,14 @@
+local console = require "defcon.console"
+
+function init(self)
+	print("init()")
+	console.start()
+end
+
+function final(self)
+	console.stop()
+end
+
+function update(self, dt)
+	console.update()
+end
