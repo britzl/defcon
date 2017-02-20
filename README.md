@@ -1,7 +1,8 @@
 # DefCon
 This is a Defold developer console. The console allows you to interact with a running game (locally or on device) through a browser.
 
-<img src="docs/console.gif" style="width: 640px"/>
+![docs/console.gif](docs/console.gif)
+
 
 ## Installation
 You can use DefCon in your own project by adding this project as a [Defold library dependency](http://www.defold.com/manuals/libraries/). Open your game.project file and in the dependencies field under project add:
