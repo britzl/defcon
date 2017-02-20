@@ -1,6 +1,5 @@
 local prettify = require "defcon.util.prettify"
-local socket_server = require "defcon.socket.socket_server"
-local http_server = require "defcon.socket.http_server"
+local http_server = require "defnet.http_server"
 local utils = require "defcon.util.utils"
 
 local console_html = require "defcon.html.console_html"
@@ -22,57 +21,84 @@ local function handle_arg(arg)
 	return ok and num or arg
 end
 
-
-
-function M.handle_command(command)
+local function handle_command(command_string)
 	-- split the command in it's parts
-	-- get the command and check if it's a know command
-	local command_parts = utils.split(command, " ")
+	-- run it if it's a known command
+	-- try to run it as Lua code if it's not a known command
+	local command_parts = utils.split(command_string, " ")
 	local command = table.remove(command_parts, 1)
-	for k,v in pairs(command_parts) do
-		command_parts[k] = handle_arg(v)
-	end
-	local command_data = commands[command]
-	if not command_data then
-		return "Unknown command"
-	end
-
-	-- call command function and handle any error
-	-- store command results in a table
 	local result
-	local ok, err = pcall(function()
-		result = { command_data.fn(unpack(command_parts)) }
-	end)
+	if commands[command] then
+		for k,v in pairs(command_parts) do
+			command_parts[k] = handle_arg(v)
+		end
+		local command_data = commands[command]
 
-	-- if only a single result then return it instead of inside the table
-	if result and #result == 1 then
+		-- call command function and handle any error
+		-- store command results in a table
+		local ok, err = pcall(function()
+			result = { command_data.fn(unpack(command_parts)) }
+		end)
+		
+		if not ok then
+			result = { err }
+		end
+	-- run it as Lua code
+	else
+		local ok, err = pcall(function()
+			local fn = loadstring("return " .. command_string) or loadstring(command_string)
+			if not fn then
+				return "Error: Unable to run " .. command_string
+			end
+			result = { fn() }
+		end)
+		
+		if not ok then
+			result = { err }
+		end
+	end
+
+	-- if only a single or no result then return it instead of inside the table
+	if result and #result < 2 then
 		result = result[1]
 	end
 	return prettify(result)
 end
 
 
-function M.start()
-	print("http_server start")
-	server = http_server.create(8098)
+--- Start the console
+-- @param port The port to listen for commands at
+function M.start(port)
+	port = port or 8098
+	server = http_server.create(port)
 	server.router.get("^/console/(.*)$", function(command)
-		command = utils.unescape(command)
-		local response = M.handle_command(command)
-		local jsonresponse = '{ "response": "' .. utils.escape(tostring(response)) .. '" }\r\n'
-		return http_server.json(jsonresponse, 200)
-	end)
-	server.router.get("^/foo/(%d+)$", function(id)
-		return http_server.html("foo " .. id, 200)
+		command = utils.urldecode(command)
+		local response = handle_command(command)
+		local jsonresponse = '{ "response": "' .. utils.urlencode(tostring(response)) .. '" }\r\n'
+		return http_server.json(jsonresponse)
 	end)
 	server.router.get("^/$", function()
-		return http_server.html(console_html, 200)
+		return http_server.html(console_html)
+	end)
+	server.router.get("^/download/(.*)$", function(path)
+		local parts = utils.split(utils.urldecode(path), "/")
+		local filename = parts[#parts]
+		local ok, content_or_err = pcall(function()
+			local f = io.open(filename, "rb")
+			local content = f:read("*a")
+			return content
+		end)
+		if not ok then
+			return http_server.html("NOT FOUND", "404 NOT FOUND")
+		else
+			return http_server.file(content_or_err, filename)
+		end
 	end)
 	server.router.unhandled(function()
-		return http_server.html("NOT FOUND", 404)
+		return http_server.html("NOT FOUND", "404 NOT FOUND")
 	end)
 	server.start()
 
-	-- register a command to list all modules
 	M.register_command("modules", "Show all modules", function()
 		local s = ""
 		for name,_ in pairs(modules) do
@@ -89,14 +115,6 @@ function M.start()
 			end
 		end
 		return s
-	end)
-	
-
-	M.register_command("run", "Run arbitrary Lua code", function(...)
-		local s = table.concat({...}, " ")
-		print("Running command " .. s)
-		local fn = loadstring(s)
-		return fn() or "OK"
 	end)
 
 	M.register_command("inspect", "Inspect the field of a registered module, a loaded package or a global value", function(name)
@@ -123,9 +141,27 @@ function M.start()
 			end
 		end
 	end)
+
+	M.register_command("toggle_profiler", "Toggle the on-screen profiler", function()
+		msg.post("@system:", "toggle_profile")
+		return "OK"
+	end)
 	
+	M.register_command("toggle_physics_debug", "Toggle physics debug", function()
+		msg.post("@system:", "toggle_physics_debug")
+		return "OK"
+	end)
+	
+	M.register_command("start_record", "Start recording video to specified file", function(filename)
+		msg.post("@system:", "start_record", { file_name = filename, frame_period = 1 } )
+	end)
+	
+	M.register_command("stop_record", "Stop recording video", function()
+		msg.post("@system:", "stop_record")
+	end)
 end
 
+--- Stop the server
 function M.stop()
 	if server then
 		server.stop()
@@ -133,6 +169,8 @@ function M.stop()
 end
 
 
+--- Update the server
+-- Preferably call this once per frame
 function M.update()
 	if server then
 		server.update()

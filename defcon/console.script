@@ -1,7 +1,6 @@
 local console = require "defcon.console"
 
 function init(self)
-	print("init()")
 	console.start()
 end
 
