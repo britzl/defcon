@@ -35,7 +35,7 @@ The console comes with a few basic commands:
 If the command given to the console doesn't match any known command the entered string will be run as arbitrary Lua code instead.
 
 ### Extend
-You can extend the console with commands of your own. This is the true power of the console since it can speed up testing and help with debugging.
+You can extend the console with commands of your own.
 
 #### Commands from module functions
 You can add whole modules and have all functions mapped as commands:
