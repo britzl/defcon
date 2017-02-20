@@ -6,11 +6,15 @@ This is a Defold developer console. The console allows you to interact with a ru
 ## Installation
 You can use DefCon in your own project by adding this project as a [Defold library dependency](http://www.defold.com/manuals/libraries/). Open your game.project file and in the dependencies field under project add:
 
-https://github.com/britzl/defcon/archive/master.zip
+	https://github.com/britzl/defcon/archive/master.zip
 
-Or point to the ZIP file of a [specific release](https://github.com/britzl/defcon/releases).
+Or point to the ZIP file of a [specific DefCon release](https://github.com/britzl/defcon/releases).
 
-Once you have added the dependency to your project all you need to do is to add the `console.go` or `console.script` to a collection. The next time you launch your game the console will be running and you should be able to point your browser to `localhost:8098` or `ip_of_your_device:8098` to access the console.
+You also need to add a dependency to [DefNet](https://github.com/britzl/defnet):
+
+	https://github.com/britzl/defnet/archive/1.2.zip
+
+Once you have added the dependencies to your project all you need to do is to add the `defcon/console.go` or `defcon/console.script` to a collection in your project. The next time you launch your game the console will be running and you should be able to point your browser to `localhost:8098` or `ip_of_your_device:8098` to access the console.
 
 ### Under the hood
 The console is served using the web server from [DefNet](https://github.com/britzl/defnet/blob/master/defnet/http_server.lua) (a simple web server created on top of LuaSocket). The web server accepts incoming connections, reads the entire HTTP request, looks at the HTTP request line, tries to match the request to a known route and invokes the function bound to that route and finally returns a response. When a request is sent to the web root (`localhost:8098/`) the web server is configured to return a web page with the simple console that is used to send commands to the console. The console consists of a text area to show command results and a text input where commands are entered. When a command is entered it is sent to the http server (`localhost:8098/console`) using a XMLHttpRequest object.
