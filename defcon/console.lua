@@ -75,10 +75,10 @@ function M.start(port)
 		command = utils.urldecode(command)
 		local response = handle_command(command)
 		local jsonresponse = '{ "response": "' .. utils.urlencode(tostring(response)) .. '" }\r\n'
-		return http_server.json(jsonresponse)
+		return server.json(jsonresponse)
 	end)
 	server.router.get("^/$", function()
-		return http_server.html(console_html)
+		return server.html(console_html)
 	end)
 	server.router.get("^/download/(.*)$", function(path)
 		local parts = utils.split(utils.urldecode(path), "/")
@@ -89,13 +89,13 @@ function M.start(port)
 			return content
 		end)
 		if not ok then
-			return http_server.html("NOT FOUND", "404 NOT FOUND")
+			return server.html("NOT FOUND", http_server.NOT_FOUND)
 		else
-			return http_server.file(content_or_err, filename)
+			return server.file(content_or_err, filename)
 		end
 	end)
 	server.router.unhandled(function()
-		return http_server.html("NOT FOUND", "404 NOT FOUND")
+		return server.html("NOT FOUND", http_server.NOT_FOUND)
 	end)
 	server.start()
 

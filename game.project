@@ -1,7 +1,7 @@
 [project]
 title = DefCon
 version = 1.0
-dependencies = https://github.com/britzl/defnet/archive/1.2.zip
+dependencies = https://github.com/britzl/defnet/archive/2.0.zip
 
 [bootstrap]
 main_collection = /example/example.collectionc
