@@ -11,7 +11,7 @@ return [[
 			var command = document.getElementById('command').value;
 			log.value = log.value + "> " + command + "\n"
 
-			var url = "http://localhost:8098/console/" + encodeURIComponent(command);
+			var url = window.location.protocol + "//" + window.location.host + "/console/" + encodeURIComponent(command);
 			var xhr = new XMLHttpRequest();
 			xhr.open("GET", url);
 			xhr.responseType = "json";
