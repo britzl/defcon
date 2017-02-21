@@ -22,3 +22,12 @@ shared_state = 1
 [library]
 include_dirs = defcon
 
+[android]
+package = com.britzl.defcon
+
+[ios]
+bundle_identifier = com.britzl.defcon
+
+[osx]
+bundle_identifier = com.britzl.defcon
+
