@@ -13,7 +13,7 @@ Or point to the ZIP file of a [specific DefCon release](https://github.com/britz
 
 You also need to add a dependency to [DefNet](https://github.com/britzl/defnet):
 
-	https://github.com/britzl/defnet/archive/1.2.zip
+	https://github.com/britzl/defnet/archive/2.0.zip
 
 Once you have added the dependencies to your project all you need to do is to add the `defcon/console.go` or `defcon/console.script` to a collection in your project. The next time you launch your game the console will be running and you should be able to point your browser to `localhost:8098` or `ip_of_your_device:8098` to access the console.
 
