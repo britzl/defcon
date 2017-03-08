@@ -81,16 +81,16 @@ function M.start(port)
 		return server.html(console_html)
 	end)
 	server.router.get("^/download/(.*)$", function(path)
-		local parts = utils.split(utils.urldecode(path), "/")
-		local filename = parts[#parts]
 		local ok, content_or_err = pcall(function()
-			local f = io.open(filename, "rb")
+			local f = io.open(path, "rb")
 			local content = f:read("*a")
 			return content
 		end)
 		if not ok then
 			return server.html("NOT FOUND", http_server.NOT_FOUND)
 		else
+			local parts = utils.split(utils.urldecode(path), "/")
+			local filename = parts[#parts]
 			return server.file(content_or_err, filename)
 		end
 	end)
