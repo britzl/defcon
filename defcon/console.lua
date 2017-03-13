@@ -13,8 +13,6 @@ local commands = {}
 
 local modules = {}
 
-local server
-
 local function handle_arg(arg)
 	local ok, num = pcall(tonumber, arg)
 	--return ok and num or arg:gsub("\"", "")
@@ -70,34 +68,34 @@ end
 -- @param port The port to listen for commands at
 function M.start(port)
 	port = port or 8098
-	server = http_server.create(port)
-	server.router.get("^/console/(.*)$", function(command)
+	M.server = http_server.create(port)
+	M.server.router.get("^/console/(.*)$", function(command)
 		command = utils.urldecode(command)
 		local response = handle_command(command)
 		local jsonresponse = '{ "response": "' .. utils.urlencode(tostring(response)) .. '" }\r\n'
-		return server.json(jsonresponse)
+		return M.server.json(jsonresponse)
 	end)
-	server.router.get("^/$", function()
-		return server.html(console_html)
+	M.server.router.get("^/$", function()
+		return M.server.html(console_html)
 	end)
-	server.router.get("^/download/(.*)$", function(path)
+	M.server.router.get("^/download/(.*)$", function(path)
 		local ok, content_or_err = pcall(function()
 			local f = io.open(path, "rb")
 			local content = f:read("*a")
 			return content
 		end)
 		if not ok then
-			return server.html("NOT FOUND", http_server.NOT_FOUND)
+			return M.server.html("NOT FOUND", http_server.NOT_FOUND)
 		else
 			local parts = utils.split(utils.urldecode(path), "/")
 			local filename = parts[#parts]
-			return server.file(content_or_err, filename)
+			return M.server.file(content_or_err, filename)
 		end
 	end)
-	server.router.unhandled(function()
-		return server.html("NOT FOUND", http_server.NOT_FOUND)
+	M.server.router.unhandled(function()
+		return M.server.html("NOT FOUND", http_server.NOT_FOUND)
 	end)
-	server.start()
+	M.server.start()
 
 	M.register_command("modules", "Show all modules", function()
 		local s = ""
@@ -163,8 +161,8 @@ end
 
 --- Stop the server
 function M.stop()
-	if server then
-		server.stop()
+	if M.server then
+		M.server.stop()
 	end
 end
 
@@ -172,8 +170,8 @@ end
 --- Update the server
 -- Preferably call this once per frame
 function M.update()
-	if server then
-		server.update()
+	if M.server then
+		M.server.update()
 	end
 end
 
