@@ -40,7 +40,7 @@ You can extend the console with commands of your own.
 #### Commands from module functions
 You can add whole modules and have all functions mapped as commands:
 
-	local foobar_module = require"(foobar_module")
+	local foobar_module = require("foobar_module")
 	local console = require("defcon.console")
 	console.add_module(foobar_module)
 
@@ -57,7 +57,17 @@ You can also add custom commands:
 The web server also allows you to download files available to your game. If you make an HTTP GET or open your browser to the following URL the specified file will be returned:
 
 	localhost:8098/download/path/to/myfile
-	
+
+## Custom web server routes
+It's possible to add custom web server routes to server specific content over HTTP:
+
+	local console = require("defcon.console")
+	console.server.router.get("^/greet/(.*)$", function(path)
+		return console.server.html("Hello " .. path .. "!")
+	end)
+
+For a more complex async response example plase refer to the code samples: https://github.com/britzl/defcon/blob/master/example/example.gui_script#L21-L37
+
 ## Credits
 * URL encode/decode from [CGILua](https://github.com/keplerproject/cgilua/blob/master/src/cgilua/urlcode.lua)
 * String split from [Lua wiki](http://lua-users.org/wiki/SplitJoin)
