@@ -15,26 +15,39 @@ return [[
 				var reader = response.body.getReader();
 				var decoder = new TextDecoder();
 				var log = document.getElementById('log');
+				var partial = "";
 				function read() {
 					return reader.read().then(function(result) {
-						var data = decoder.decode(result.value || new Uint8Array, {
+						partial += decoder.decode(result.value || new Uint8Array, {
 							stream: !result.done
 						});
+						
+						var complete = partial.split(/(?:,|\r\n)/);
+						if (!result.done) {
+							partial = complete[complete.length - 1];
+							complete = complete.slice(0, -1);
+						}
+						for (var data of complete) {
+							if (data.length > 0) {
+								try {
+									var response = unescape(JSON.parse(data).response);
+									if (response == null) {
+										response = ""
+									}
+									response = response.split("+").join(" ")
+									log.value = log.value + response + "\n"
+									log.scrollTop = log.scrollHeight;
+								}
+								catch(err) {
+									console.log("err" + err);
+								}
+							}
+						}
+
 						if (result.done) {
 							return;
 						}
-						try {
-							var response = unescape(JSON.parse(data).response);
-							if (response == null) {
-								response = ""
-							}
-							response = response.split("+").join(" ")
-							log.value = log.value + response + "\n"
-							log.scrollTop = log.scrollHeight;
-						}
-						catch(err) {
-							console.log("err" + err);
-						}
+						
 						return read();
 					})
 				}
