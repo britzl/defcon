@@ -193,12 +193,14 @@ function M.start(port)
 		end
 
 		local name = args[1]
-		for _,t in ipairs({ modules, _G, package.loaded }) do
+		local search = { modules, _G, package.loaded, { ["_G"] = _G }}
+		for _,t in ipairs(search) do
 			local found = find_in_table(t, name)
 			if found then
 				return prettify(found)
 			end
 		end
+		return "Unable to find " .. name
 	end)
 
 	M.register_command("toggle_profiler", "Toggle the on-screen profiler", function()
