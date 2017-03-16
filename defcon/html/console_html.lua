@@ -1,45 +1,46 @@
 return [[
 <html>
 <head>
-	<!--<script src="console.js" type="text/javascript"></script>-->
 	<script type="text/javascript">
 		var command_history = [];
 		var command_index = 0;
 		function send(data) {
-			console.log("send")
 			var log = document.getElementById('log');
 			var command = document.getElementById('command').value;
 			log.value = log.value + "> " + command + "\n"
 
 			var url = window.location.protocol + "//" + window.location.host + "/console/" + encodeURIComponent(command);
-			var xhr = new XMLHttpRequest();
-			xhr.open("GET", url);
-			xhr.responseType = "json";
-			xhr.onload = function() {
-				if (xhr.status === 0
-				 || xhr.status >= 200 && xhr.status < 300
-				 || xhr.status === 304) {
-					var response = unescape(xhr.response.response);
-					if (response == null) {
-						response = ""
-					}
-					response = response.split("+").join(" ")
-					console.log("response " + response)
-					log.value = log.value + response + "\n"
-					log.scrollTop = log.scrollHeight;
+
+			fetch(url).then(function(response) {
+				var reader = response.body.getReader();
+				var decoder = new TextDecoder();
+				var log = document.getElementById('log');
+				function read() {
+					return reader.read().then(function(result) {
+						var data = decoder.decode(result.value || new Uint8Array, {
+							stream: !result.done
+						});
+						if (result.done) {
+							return;
+						}
+						try {
+							var response = unescape(JSON.parse(data).response);
+							if (response == null) {
+								response = ""
+							}
+							response = response.split("+").join(" ")
+							log.value = log.value + response + "\n"
+							log.scrollTop = log.scrollHeight;
+						}
+						catch(err) {
+							console.log("err" + err);
+						}
+						return read();
+					})
 				}
-				else {
-					console.log("status " + xhr.statusText)
-					log.value = log.value + xhr.statusText;
-					log.scrollTop = log.scrollHeight;
-				}
-			};
-			xhr.onerror = function() {
-				console.log("onerror called")
-				log.value = log.value + xhr.statusText;
-				log.scrollTop = log.scrollHeight;
-			};
-			xhr.send(null);
+	
+				return read();
+			});
 		}
 		function move_cursor_to_end(el) {
 			setTimeout(function() {
