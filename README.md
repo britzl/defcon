@@ -60,7 +60,7 @@ The web server also allows you to download files available to your game. If you 
 	localhost:8098/download/path/to/myfile
 
 ## Custom web server routes
-It's possible to add custom web server routes to server specific content over HTTP:
+It's possible to add custom web server routes to serve specific content over HTTP:
 
 	local console = require("defcon.console")
 	console.server.router.get("^/greet/(.*)$", function(path)
