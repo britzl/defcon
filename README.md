@@ -28,8 +28,9 @@ The console comes with a few basic commands:
 * `modules` - Show all added modules (read more about this below)
 * `toggle_profiler` - Toggle the on-screen profiler
 * `toggle_physics_debug` - Toggle physics debug
-* `start_record [name]` - Start recording video to a file with the given name
+* `start_record [filename]` - Start recording video to a file with the given name
 * `stop_record` - Stop recording video
+* `log` - [start|stop] Start/stop capturing print commands
 
 ### Running arbitrary Lua code
 If the command given to the console doesn't match any known command the entered string will be run as arbitrary Lua code instead.

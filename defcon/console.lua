@@ -7,6 +7,8 @@ local console_html = require "defcon.html.console_html"
 
 local M = {}
 
+M.print = _G.print
+
 local co
 
 local commands = {}
@@ -19,30 +21,38 @@ local function handle_arg(arg)
 	return ok and num or arg
 end
 
-local function handle_command(command_string)
+local function handle_command(command_string, stream)
 	-- split the command in it's parts
 	-- run it if it's a known command
 	-- try to run it as Lua code if it's not a known command
 	local command_parts = utils.split(command_string, " ")
 	local command = table.remove(command_parts, 1)
-	local result
 	if commands[command] then
+		local result
 		for k,v in pairs(command_parts) do
 			command_parts[k] = handle_arg(v)
 		end
 		local command_data = commands[command]
 
-		-- call command function and handle any error
-		-- store command results in a table
 		local ok, err = pcall(function()
-			result = { command_data.fn(unpack(command_parts)) }
+			result = command_data.fn(command_parts, stream)
 		end)
 		
 		if not ok then
-			result = { err }
+			result = err
 		end
+
+		local result_type = type(result)
+		if result_type == "function" or result_type == "nil" then
+			return result
+		end
+		if result_type == "table" and #result < 2 then
+			result = result[1]
+		end
+		return prettify(result)
 	-- run it as Lua code
 	else
+		local result
 		local ok, err = pcall(function()
 			local fn = loadstring("return " .. command_string) or loadstring(command_string)
 			if not fn then
@@ -52,33 +62,74 @@ local function handle_command(command_string)
 		end)
 		
 		if not ok then
-			result = { err }
+			result = err
 		end
+		if type(result) == "table" and #result < 2 then
+			result = result[1]
+		end
+		return prettify(result)
 	end
-
-	-- if only a single or no result then return it instead of inside the table
-	if result and #result < 2 then
-		result = result[1]
-	end
-	return prettify(result)
+	
 end
 
+local log_streams = {}
+local function start_log()
+	if _G.print == M.print then
+		_G.print = function(...)
+			M.print(...)
+			local s = ""
+			for k,v in ipairs({...}) do
+				s = s .. tostring(v) .. " "
+			end
+			for k,stream in ipairs(log_streams) do
+				local ok = stream(s)
+				if not ok then
+					log_streams[k] = nil
+				end
+			end
+		end
+	end
+end
+
+local function stop_log()
+	_G.print = M.print
+	log_streams = {}
+end
 
 --- Start the console
 -- @param port The port to listen for commands at
 function M.start(port)
 	port = port or 8098
 	M.server = http_server.create(port)
-	M.server.router.get("^/console/(.*)$", function(command)
-		command = utils.urldecode(command)
-		local response = handle_command(command)
-		local jsonresponse = '{ "response": "' .. utils.urlencode(tostring(response)) .. '" }\r\n'
-		return M.server.json(jsonresponse)
+
+	-- send print logging as chunked html (for direct streaming to a browser)
+	M.server.router.get("^/log/start$", function(matches, stream)
+		table.insert(log_streams, function(s)
+			return stream(M.server.to_chunk(s .. "</br>"))
+		end)
+		start_log()
+		stream(M.server.html())
 	end)
+
+	-- handle a console command
+	M.server.router.get("^/console/(.*)$", function(matches, stream)
+		local command = utils.urldecode(matches[1])
+		local response = handle_command(command, stream)
+		if type(response) == "string" then
+			return M.server.json('{ "response": "' .. utils.urlencode(tostring(response)) .. '" }\r\n')
+		else
+			return response or ""
+		end
+	end)
+	
+	-- serve the console
 	M.server.router.get("^/$", function()
 		return M.server.html(console_html)
 	end)
-	M.server.router.get("^/download/(.*)$", function(path)
+	
+	-- download a file
+	M.server.router.get("^/download/(.*)$", function(matches)
+		local path = matches[1]
 		local ok, content_or_err = pcall(function()
 			local f = io.open(path, "rb")
 			local content = f:read("*a")
@@ -92,6 +143,7 @@ function M.start(port)
 			return M.server.file(content_or_err, filename)
 		end
 	end)
+	
 	M.server.router.unhandled(function()
 		return M.server.html("NOT FOUND", http_server.NOT_FOUND)
 	end)
@@ -109,13 +161,21 @@ function M.start(port)
 		local s = ""
 		for command,command_data in pairs(commands) do
 			if command:match(".*%..*") ~= command then
-				s = s .. command .. " - \"" .. command_data.description .. "\"\n"
+				s = s .. " - " .. command .. "\n"
 			end
 		end
 		return s
 	end)
 
-	M.register_command("inspect", "Inspect the field of a registered module, a loaded package or a global value", function(name)
+	M.register_command("help", "[command] Show help for a command", function(args)
+		local command = args[1]
+		if not command then
+			return "Please specify a command to show help for"
+		end
+		return commands[command] and commands[command].description or "Command not found"
+	end)
+
+	M.register_command("inspect", "[table] Inspect the field of a registered module, a loaded package or a global value", function(args)
 		local function find_in_table(t, what)
 			if t[what] then
 				return t[what]
@@ -132,6 +192,7 @@ function M.start(port)
 			end
 		end
 
+		local name = args[1]
 		for _,t in ipairs({ modules, _G, package.loaded }) do
 			local found = find_in_table(t, name)
 			if found then
@@ -150,12 +211,29 @@ function M.start(port)
 		return "OK"
 	end)
 	
-	M.register_command("start_record", "Start recording video to specified file", function(filename)
+	M.register_command("start_record", "[filename] Start recording video to specified file", function(args)
+		local filename = args[1]
+		if not filename then
+			return "You must provide a filename"
+		end
 		msg.post("@system:", "start_record", { file_name = filename, frame_period = 1 } )
 	end)
 	
 	M.register_command("stop_record", "Stop recording video", function()
 		msg.post("@system:", "stop_record")
+	end)
+	
+	M.register_command("log", "[start|stop] Start/stop receiving client logging", function(args, stream)
+		if args[1] == "stop" then
+			stop_log()
+		else
+			table.insert(log_streams, function(s)
+				return stream(M.server.to_chunk('{ "response": "' .. utils.urlencode(s) .. '" }\r\n'))
+			end)
+			start_log()
+			stream(M.server.json())
+			stream(M.server.to_chunk('{ "response": "Log capture started" }\r\n'))
+		end
 	end)
 end
 
@@ -213,7 +291,9 @@ function M.register_module(module, name)
 	modules[name] = module
 	for k,v in pairs(module) do
 		if type(v) == "function" then
-			M.register_command(name .. "." .. k, "", v)
+			M.register_command(name .. "." .. k, "", function(args, fn)
+				return { v(unpack(args)) }
+			end)
 		end
 	end
 
