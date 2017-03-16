@@ -18,7 +18,8 @@ function init(self)
 
 	console.register_module(math, "math")
 	
-	console.server.router.get("^/imgur/(.*)$", function(path)
+	console.server.router.get("^/imgur/(.*)$", function(matches)
+		local path = matches[1]
 		local co = coroutine.running()
 		local headers = {
 			Authorization = "Client-ID 0166969aba5f28b"

@@ -13,7 +13,7 @@ Or point to the ZIP file of a [specific DefCon release](https://github.com/britz
 
 You also need to add a dependency to [DefNet](https://github.com/britzl/defnet):
 
-	https://github.com/britzl/defnet/archive/2.1.1.zip
+	https://github.com/britzl/defnet/archive/3.0.zip
 
 Once you have added the dependencies to your project all you need to do is to add the `defcon/console.go` or `defcon/console.script` to a collection in your project. The next time you launch your game the console will be running and you should be able to point your browser to `localhost:8098` or `ip_of_your_device:8098` to access the console.
 
@@ -49,10 +49,12 @@ You can add whole modules and have all functions mapped as commands:
 You can also add custom commands:
 
 	local console = require("defcon.console")
-	console.add_command("mycommand", function(foo, bar)
+	console.add_command("mycommand", function(args, stream)
 		-- execute command here
 		return "Return this back to console"
 	end)
+
+The stream argument is a function that allows the client to stream data instead of returning everything in one go. Call the function with the data to send to the client. Start by sending a header indicating a chunked transfer encoding.
 
 ## Download files
 The web server also allows you to download files available to your game. If you make an HTTP GET or open your browser to the following URL the specified file will be returned:
@@ -63,7 +65,8 @@ The web server also allows you to download files available to your game. If you 
 It's possible to add custom web server routes to serve specific content over HTTP:
 
 	local console = require("defcon.console")
-	console.server.router.get("^/greet/(.*)$", function(path)
+	console.server.router.get("^/greet/(.*)$", function(matches)
+		local path = matches[1]
 		return console.server.html("Hello " .. path .. "!")
 	end)
 
