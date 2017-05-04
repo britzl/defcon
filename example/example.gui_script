@@ -42,8 +42,12 @@ function final(self)
 	msg.post(".", "release_input_focus")
 end
 
+local count = 0
 function update(self, dt)
-	print("This is a print from the running app", os.time())
+	if math.random(1,20) == 1 then
+		count = count + 1
+		print("This is a print from the running app", os.time(), count)
+	end
 end
 
 function on_message(self, message_id, message, sender)

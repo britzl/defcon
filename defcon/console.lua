@@ -73,20 +73,29 @@ local function handle_command(command_string, stream)
 end
 
 local log_streams = {}
+
+local function is_log_started()
+	return _G.print ~= M.print
+end
+
+local function send_to_streams(s)
+	for k,stream in pairs(log_streams) do
+		local ok = stream(s)
+		if not ok then
+			log_streams[k] = nil
+		end
+	end
+end
+
 local function start_log()
-	if _G.print == M.print then
+	if not is_log_started() then
 		_G.print = function(...)
 			M.print(...)
 			local s = ""
 			for k,v in ipairs({...}) do
 				s = s .. tostring(v) .. " "
 			end
-			for k,stream in ipairs(log_streams) do
-				local ok = stream(s)
-				if not ok then
-					log_streams[k] = nil
-				end
-			end
+			send_to_streams(s)
 		end
 	end
 end
@@ -229,12 +238,14 @@ function M.start(port)
 		if args[1] == "stop" then
 			stop_log()
 		else
-			table.insert(log_streams, function(s)
-				return stream(M.server.to_chunk('{ "response": "' .. utils.urlencode(s) .. '" }\r\n'))
-			end)
-			start_log()
-			stream(M.server.json())
-			stream(M.server.to_chunk('{ "response": "Log capture started" }\r\n'))
+			if not is_log_started() then
+				table.insert(log_streams, function(s)
+					return stream(M.server.to_chunk('{ "response": "' .. utils.urlencode(s) .. '" }\r\n'))
+				end)
+				start_log()
+				stream(M.server.json())
+				stream(M.server.to_chunk('{ "response": "Log capture started" }\r\n'))
+			end
 		end
 	end)
 end
