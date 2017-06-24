@@ -237,6 +237,14 @@ function M.start(port, enable_debugger)
 		msg.post("@system:", "stop_record")
 	end)
 	
+	M.register_command("reboot", "Reboot Defold engine", function()
+		msg.post("@system:", "reboot")
+	end)
+	
+	M.register_command("exit", "Terminates the application", function()
+		msg.post("@system:", "exit", { code = 0 })
+	end)
+	
 	M.register_command("log", "[start|stop] Start/stop receiving client logging", function(args, stream)
 		if args[1] == "stop" then
 			stop_log()
@@ -253,51 +261,63 @@ function M.start(port, enable_debugger)
 	end)
 	
 	if enable_debugger then
-		debugger.start(M.server.update)
+		local current_stream = nil
+
+		debugger.start(M.server.update, function()
+			current_stream(M.server.to_chunk('{ "response": "BREAKPOINT" }\r\n'))
+			current_stream(M.server.to_chunk('{ "response": "' .. utils.urlencode(prettify(debugger.info())) .. '" }\r\n'))
+			current_stream(M.server.to_chunk('{ "response": "' .. utils.urlencode(prettify(debugger.stack())) .. '" }\r\n'))
+			current_stream(M.server.to_chunk(""))
+			current_stream = nil
+		end)
 		
 		M.register_command("debug", "", function(args, stream)
+			if current_stream then
+				current_stream(M.server.to_chunk(""))
+				current_stream = nil
+			end
+
 			local command = args[1] or "start"
 			if command == "step" then
-				debugger.step(function(info)
-					stream(M.server.to_chunk('{ "response": "' .. utils.urlencode(prettify(info)) .. '" }\r\n'))
-					stream(M.server.to_chunk(""))
-				end)
-				stream(M.server.json())
-				stream(M.server.to_chunk('{ "response": "OK" }\r\n'))
+				current_stream = stream
+				current_stream(M.server.json())
+				current_stream(M.server.to_chunk('{ "response": "OK" }\r\n'))
+				debugger.step()
 			elseif command == "run" then
+				current_stream = stream
+				current_stream(M.server.json())
+				current_stream(M.server.to_chunk('{ "response": "OK" }\r\n'))
 				debugger.run()
-				return "OK"
 			elseif command == "break" then
-				debugger.breaknow(function(info)
-					stream(M.server.to_chunk('{ "response": "' .. utils.urlencode(prettify(info)) .. '" }\r\n'))
-					stream(M.server.to_chunk(""))
-				end)
-				stream(M.server.json())
-				stream(M.server.to_chunk('{ "response": "OK" }\r\n'))
+				current_stream = stream
+				current_stream(M.server.json())
+				current_stream(M.server.to_chunk('{ "response": "OK" }\r\n'))
+				debugger.breaknow()
 			elseif command == "info" then
-				local info = debugger.info()
 				return prettify(debugger.info())
 			elseif command == "addb" then
+				current_stream = stream
+				current_stream(M.server.json())
 				local file = args[2]
 				local line = tonumber(args[3])
-				debugger.add_breakpoint(file, line, function(info)
-					stream(M.server.to_chunk('{ "response": "' .. utils.urlencode(prettify(info)) .. '" }\r\n'))
-					stream(M.server.to_chunk(""))
-				end)
-				stream(M.server.json())
+				debugger.add_breakpoint(file, line)
 			elseif command == "removeb" then
 				local file = args[2]
 				local line = tonumber(args[3])
 				debugger.remove_breakpoint(file, line)
+				return "OK"
 			elseif command == "listb" then
-				stream(M.server.json())
+				current_stream = stream
+				current_stream(M.server.json())
 				local bp = debugger.list_breakpoints()
 				for file,lines in pairs(bp) do
 					for line,_ in pairs(lines) do
-						stream(M.server.to_chunk(('{ "response": "%s:%d" }\r\n'):format(file, line)))
+						current_stream(M.server.to_chunk(('{ "response": "%s:%d" }\r\n'):format(file, line)))
 					end
 				end
-				stream(M.server.to_chunk(""))
+				current_stream(M.server.to_chunk(""))
+			elseif command == "stack" then
+				return prettify(debugger.stack())
 			else
 				return "UNKNOWN COMMAND " .. command
 			end
