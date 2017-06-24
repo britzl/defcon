@@ -1,6 +1,7 @@
 local prettify = require "defcon.util.prettify"
 local http_server = require "defnet.http_server"
 local utils = require "defcon.util.utils"
+local debugger = require "defcon.debugger"
 
 local console_html = require "defcon.html.console_html"
 
@@ -105,9 +106,11 @@ local function stop_log()
 	log_streams = {}
 end
 
+
+
 --- Start the console
 -- @param port The port to listen for commands at
-function M.start(port)
+function M.start(port, enable_debugger)
 	port = port or 8098
 	M.server = http_server.create(port)
 
@@ -248,7 +251,60 @@ function M.start(port)
 			end
 		end
 	end)
+	
+	if enable_debugger then
+		debugger.start(M.server.update)
+		
+		M.register_command("debug", "", function(args, stream)
+			local command = args[1] or "start"
+			if command == "step" then
+				debugger.step(function(info)
+					stream(M.server.to_chunk('{ "response": "' .. utils.urlencode(prettify(info)) .. '" }\r\n'))
+					stream(M.server.to_chunk(""))
+				end)
+				stream(M.server.json())
+				stream(M.server.to_chunk('{ "response": "OK" }\r\n'))
+			elseif command == "run" then
+				debugger.run()
+				return "OK"
+			elseif command == "break" then
+				debugger.breaknow(function(info)
+					stream(M.server.to_chunk('{ "response": "' .. utils.urlencode(prettify(info)) .. '" }\r\n'))
+					stream(M.server.to_chunk(""))
+				end)
+				stream(M.server.json())
+				stream(M.server.to_chunk('{ "response": "OK" }\r\n'))
+			elseif command == "info" then
+				local info = debugger.info()
+				return prettify(debugger.info())
+			elseif command == "addb" then
+				local file = args[2]
+				local line = tonumber(args[3])
+				debugger.add_breakpoint(file, line, function(info)
+					stream(M.server.to_chunk('{ "response": "' .. utils.urlencode(prettify(info)) .. '" }\r\n'))
+					stream(M.server.to_chunk(""))
+				end)
+				stream(M.server.json())
+			elseif command == "removeb" then
+				local file = args[2]
+				local line = tonumber(args[3])
+				debugger.remove_breakpoint(file, line)
+			elseif command == "listb" then
+				stream(M.server.json())
+				local bp = debugger.list_breakpoints()
+				for file,lines in pairs(bp) do
+					for line,_ in pairs(lines) do
+						stream(M.server.to_chunk(('{ "response": "%s:%d" }\r\n'):format(file, line)))
+					end
+				end
+				stream(M.server.to_chunk(""))
+			else
+				return "UNKNOWN COMMAND " .. command
+			end
+		end)
+	end
 end
+
 
 --- Stop the server
 function M.stop()

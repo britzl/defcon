@@ -1,7 +1,10 @@
+go.property("debugger", false)
+go.property("port", 8098)
+
 local console = require "defcon.console"
 
 function init(self)
-	console.start()
+	console.start(self.port, self.debugger)
 end
 
 function final(self)
