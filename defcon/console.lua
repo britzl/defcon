@@ -170,10 +170,16 @@ function M.start(port, enable_debugger)
 	end)
 
 	M.register_command("commands", "Show all commands", function()
+		local command_names = {}
+		for command,_ in pairs(commands) do
+			table.insert(command_names, command)
+		end
+		table.sort(command_names)
+		
 		local s = ""
-		for command,command_data in pairs(commands) do
+		for _,command in ipairs(command_names) do
 			if command:match(".*%..*") ~= command then
-				s = s .. " - " .. command .. "\n"
+				s = s .. " - " .. command .. " - " .. commands[command].description .. "\n"
 			end
 		end
 		return s
@@ -245,7 +251,7 @@ function M.start(port, enable_debugger)
 		msg.post("@system:", "exit", { code = 0 })
 	end)
 	
-	M.register_command("log", "[start|stop] Start/stop receiving client logging", function(args, stream)
+	M.register_command("log", "[start|stop] Start/stop receiving client logging (print() rerouting)", function(args, stream)
 		if args[1] == "stop" then
 			stop_log()
 		else
@@ -282,7 +288,7 @@ function M.start(port, enable_debugger)
 			current_stream = nil
 		end)
 		
-		M.register_command("debug", "", function(args, stream)
+		M.register_command("debug", "[step|stepout|stepover|run|breaknow|addb file line|removeb file line|listb]", function(args, stream)
 			if current_stream then
 				current_stream(M.server.to_chunk(""))
 				current_stream = nil
@@ -309,13 +315,11 @@ function M.start(port, enable_debugger)
 				current_stream(M.server.json())
 				current_stream(M.server.to_chunk('{ "response": "OK" }\r\n'))
 				debugger.run()
-			elseif command == "break" then
+			elseif command == "breaknow" then
 				current_stream = stream
 				current_stream(M.server.json())
 				current_stream(M.server.to_chunk('{ "response": "OK" }\r\n'))
 				debugger.breaknow()
-			elseif command == "info" then
-				return prettify(debugger.info())
 			elseif command == "addb" then
 				current_stream = stream
 				current_stream(M.server.json())
@@ -337,8 +341,6 @@ function M.start(port, enable_debugger)
 					end
 				end
 				current_stream(M.server.to_chunk(""))
-			elseif command == "stack" then
-				return prettify(debugger.stack())
 			else
 				return "UNKNOWN COMMAND " .. command
 			end
