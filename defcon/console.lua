@@ -264,9 +264,20 @@ function M.start(port, enable_debugger)
 		local current_stream = nil
 
 		debugger.start(M.server.update, function()
-			current_stream(M.server.to_chunk('{ "response": "BREAKPOINT" }\r\n'))
-			current_stream(M.server.to_chunk('{ "response": "' .. utils.urlencode(prettify(debugger.info())) .. '" }\r\n'))
-			current_stream(M.server.to_chunk('{ "response": "' .. utils.urlencode(prettify(debugger.stack())) .. '" }\r\n'))
+			current_stream(M.server.to_chunk('{ "response": "LINE:" }\r\n'))
+			local info = debugger.info()
+			local call = ("%s:%d %s (%s)"):format(info.short_src, info.linedefined or 0, info.name or "?", tostring(info.func))
+			current_stream(M.server.to_chunk('{ "response": "' .. utils.urlencode(call) .. '" }\r\n'))
+			current_stream(M.server.to_chunk('{ "response": "" }\r\n'))
+			current_stream(M.server.to_chunk('{ "response": "LOCALS:" }\r\n'))
+			for _,l in ipairs(debugger.locals()) do
+				current_stream(M.server.to_chunk('{ "response": "' .. utils.urlencode(l) .. '" }\r\n'))
+			end
+			current_stream(M.server.to_chunk('{ "response": "" }\r\n'))
+			current_stream(M.server.to_chunk('{ "response": "STACK:" }\r\n'))
+			for _,s in ipairs(debugger.stack()) do
+				current_stream(M.server.to_chunk('{ "response": "' .. utils.urlencode(s) .. '" }\r\n'))
+			end
 			current_stream(M.server.to_chunk(""))
 			current_stream = nil
 		end)
@@ -283,6 +294,16 @@ function M.start(port, enable_debugger)
 				current_stream(M.server.json())
 				current_stream(M.server.to_chunk('{ "response": "OK" }\r\n'))
 				debugger.step()
+			elseif command == "stepout" then
+				current_stream = stream
+				current_stream(M.server.json())
+				current_stream(M.server.to_chunk('{ "response": "OK" }\r\n'))
+				debugger.stepout()
+			elseif command == "stepover" then
+				current_stream = stream
+				current_stream(M.server.json())
+				current_stream(M.server.to_chunk('{ "response": "OK" }\r\n'))
+				debugger.stepover()
 			elseif command == "run" then
 				current_stream = stream
 				current_stream(M.server.json())
