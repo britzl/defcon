@@ -11,7 +11,7 @@ You can use DefCon in your own project by adding this project as a [Defold libra
 
 Or point to the ZIP file of a [specific DefCon release](https://github.com/britzl/defcon/releases).
 
-You also need to add a dependency to [DefNet](https://github.com/britzl/defnet):
+You also need to add a dependency to [DefNet 3.1 or later](https://github.com/britzl/defnet):
 
 	https://github.com/britzl/defnet/archive/3.1.zip
 
