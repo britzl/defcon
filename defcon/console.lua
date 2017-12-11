@@ -38,7 +38,7 @@ local function handle_command(command_string, stream)
 		local ok, err = pcall(function()
 			result = command_data.fn(command_parts, stream)
 		end)
-		
+
 		if not ok then
 			result = err
 		end
@@ -61,7 +61,7 @@ local function handle_command(command_string, stream)
 			end
 			result = { fn() }
 		end)
-		
+
 		if not ok then
 			result = err
 		end
@@ -70,7 +70,7 @@ local function handle_command(command_string, stream)
 		end
 		return prettify(result)
 	end
-	
+
 end
 
 local log_streams = {}
@@ -107,6 +107,7 @@ end
 
 local function stop_log()
 	_G.print = M.print
+	_G.pprint = M.pprint
 	log_streams = {}
 end
 
@@ -135,12 +136,12 @@ function M.start(port)
 			return response or ""
 		end
 	end)
-	
+
 	-- serve the console
 	M.server.router.get("^/$", function()
 		return M.server.html(console_html)
 	end)
-	
+
 	-- download a file
 	M.server.router.get("^/download/(.*)$", function(matches)
 		local path = matches[1]
@@ -157,7 +158,7 @@ function M.start(port)
 			return M.server.file(content_or_err, filename)
 		end
 	end)
-	
+
 	M.server.router.unhandled(function()
 		return M.server.html("NOT FOUND", http_server.NOT_FOUND)
 	end)
@@ -221,12 +222,12 @@ function M.start(port)
 		msg.post("@system:", "toggle_profile")
 		return "OK"
 	end)
-	
+
 	M.register_command("toggle_physics_debug", "Toggle physics debug", function()
 		msg.post("@system:", "toggle_physics_debug")
 		return "OK"
 	end)
-	
+
 	M.register_command("start_record", "[filename] Start recording video to specified file", function(args)
 		local filename = args[1]
 		if not filename then
@@ -234,11 +235,11 @@ function M.start(port)
 		end
 		msg.post("@system:", "start_record", { file_name = filename, frame_period = 1 } )
 	end)
-	
+
 	M.register_command("stop_record", "Stop recording video", function()
 		msg.post("@system:", "stop_record")
 	end)
-	
+
 	M.register_command("log", "[start|stop] Start/stop receiving client logging", function(args, stream)
 		if args[1] == "stop" then
 			stop_log()
