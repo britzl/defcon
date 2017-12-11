@@ -48,6 +48,10 @@ function update(self, dt)
 		count = count + 1
 		print("This is a print from the running app", os.time(), count)
 	end
+	if math.random(1,40) == 1 then
+		count = count + 1
+		pprint({ 1, 2, 4, 6, "foobar", key = "value", time = os.time(), count = count })
+	end
 end
 
 function on_message(self, message_id, message, sender)

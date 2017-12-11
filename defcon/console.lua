@@ -8,6 +8,7 @@ local console_html = require "defcon.html.console_html"
 local M = {}
 
 M.print = _G.print
+M.pprint = _G.pprint
 
 local co
 
@@ -96,6 +97,10 @@ local function start_log()
 				s = s .. tostring(v) .. " "
 			end
 			send_to_streams(s)
+		end
+		_G.pprint = function(t)
+			M.pprint(t)
+			send_to_streams(prettify(t))
 		end
 	end
 end
