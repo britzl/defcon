@@ -49,7 +49,7 @@ You can add whole modules and have all functions mapped as commands:
 You can also add custom commands:
 
 	local console = require("defcon.console")
-	console.add_command("mycommand", function(args, stream)
+	console.register_command("mycommand", function(args, stream)
 		-- execute command here
 		return "Return this back to console"
 	end)
