@@ -41,11 +41,11 @@ If the command given to the console doesn't match any known command the entered 
 You can extend the console with commands of your own.
 
 #### Commands from module functions
-You can add whole modules and have all functions mapped as commands:
+You can register whole modules and have all functions mapped as commands:
 
 	local foobar_module = require("foobar_module")
 	local console = require("defcon.console")
-	console.add_module(foobar_module)
+	console.register_module(foobar_module)
 
 #### Custom commands
 You can also add custom commands:
