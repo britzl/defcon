@@ -5,6 +5,8 @@ This is a Defold developer console. The console allows you to interact with a ru
 
 ![docs/console.gif](docs/console.gif)
 
+## Requirements
+DefCon relies on the Javascript `Fetch API` and the `ReadableStream API`. Please refer to the [ReadableStream browser compatibility chart](https://developer.mozilla.org/en-US/docs/Web/API/ReadableStream#Browser_compatibility) for supported browser versions and any configuration options that need to be enabled in order to use DefCon.
 
 ## Installation
 You can use DefCon in your own project by adding this project as a [Defold library dependency](http://www.defold.com/manuals/libraries/). Open your game.project file and in the dependencies field under project add:
@@ -43,34 +45,42 @@ You can extend the console with commands of your own.
 #### Commands from module functions
 You can register whole modules and have all functions mapped as commands:
 
-	local foobar_module = require("foobar_module")
-	local console = require("defcon.console")
-	console.register_module(foobar_module)
+```
+local foobar_module = require("foobar_module")
+local console = require("defcon.console")
+console.register_module(foobar_module)
+```
 
 #### Custom commands
 You can also add custom commands:
 
-	local console = require("defcon.console")
-	console.register_command("mycommand", function(args, stream)
-		-- execute command here
-		return "Return this back to console"
-	end)
+```
+local console = require("defcon.console")
+console.register_command("mycommand", function(args, stream)
+	-- execute command here
+	return "Return this back to console"
+end)
+```
 
 The stream argument is a function that allows the client to stream data instead of returning everything in one go. Call the function with the data to send to the client. Start by sending a header indicating a chunked transfer encoding.
 
 ## Download files
 The web server also allows you to download files available to your game. If you make an HTTP GET or open your browser to the following URL the specified file will be returned:
 
-	localhost:8098/download/path/to/myfile
+```
+localhost:8098/download/path/to/myfile
+```
 
 ## Custom web server routes
 It's possible to add custom web server routes to serve specific content over HTTP:
 
-	local console = require("defcon.console")
-	console.server.router.get("^/greet/(.*)$", function(matches)
-		local path = matches[1]
-		return console.server.html("Hello " .. path .. "!")
-	end)
+```
+local console = require("defcon.console")
+console.server.router.get("^/greet/(.*)$", function(matches)
+	local path = matches[1]
+	return console.server.html("Hello " .. path .. "!")
+end)
+```
 
 For a more complex async response example plase refer to the code samples: https://github.com/britzl/defcon/blob/master/example/example.gui_script#L21-L37
 
