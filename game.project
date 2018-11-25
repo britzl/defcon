@@ -2,6 +2,7 @@
 title = DefCon
 version = 1.0
 dependencies = https://github.com/britzl/defnet/archive/3.0.zip
+dependencies = https://github.com/britzl/defold-luasocket/archive/0.11.zip
 
 [bootstrap]
 main_collection = /example/example.collectionc
