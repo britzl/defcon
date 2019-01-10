@@ -16,7 +16,15 @@ function init(self)
 	
 	console.register_command("bark", "Bark like a dog!", function() return "Woof!" end)
 
-	console.register_module(math, "math")
+	local math_descriptions = {
+		abs="Return the absolute, or non-negative value, of a given value.",
+		acos="Return the inverse cosine and sine in radians of the given value.",
+		asin="Return the inverse cosine and sine in radians of the given value.",
+		atan="Return the inverse tangent in radians",
+		modf="Return the integral and fractional parts of the given number."
+	}
+
+	console.register_module(math, "math", math_descriptions)
 	
 	console.server.router.get("^/imgur/(.*)$", function(matches)
 		local path = matches[1]
