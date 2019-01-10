@@ -51,6 +51,21 @@ local console = require("defcon.console")
 console.register_module(foobar_module)
 ```
 
+You can add descriptions to your functions within your module by adding a variable with a `_desc` suffix.
+
+```lua
+
+local M = {}
+
+M.foo_desc = "Lorem ipsum dolor sit amet"
+
+function M.foo()
+end
+
+return M
+
+```
+
 #### Custom commands
 You can also add custom commands:
 

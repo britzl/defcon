@@ -1,4 +1,5 @@
 local console = require "defcon.console"
+local example_module = require "example.example_module"
 
 local function get_ip()
 	for i, a in ipairs(sys.get_ifaddrs()) do
@@ -18,6 +19,8 @@ function init(self)
 
 	console.register_module(math, "math")
 	
+	console.register_module(example_module, "example")
+
 	console.server.router.get("^/imgur/(.*)$", function(matches)
 		local path = matches[1]
 		local co = coroutine.running()

@@ -323,7 +323,8 @@ function M.register_module(module, name)
 	modules[name] = module
 	for k,v in pairs(module) do
 		if type(v) == "function" then
-			M.register_command(name .. "." .. k, "", function(args, fn)
+			local description = module[k .. "_desc"] or ""
+			M.register_command(name .. "." .. k, description, function(args, fn)
 				return { v(unpack(args)) }
 			end)
 		end
