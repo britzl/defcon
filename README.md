@@ -15,9 +15,10 @@ You can use DefCon in your own project by adding this project as a [Defold libra
 
 Or point to the ZIP file of a [specific DefCon release](https://github.com/britzl/defcon/releases).
 
-You also need to add a dependency to [DefNet 3.1 or later](https://github.com/britzl/defnet):
+You also need to add a dependency to [DefNet](https://github.com/britzl/defnet) and a compatible dependency for [LuaSocket](https://github.com/britzl/defold-luasocket/releases):
 
-	https://github.com/britzl/defnet/archive/3.1.zip
+	https://github.com/britzl/defnet/archive/5.0.1.zip
+	https://github.com/britzl/defold-luasocket/archive/0.11.zip
 
 Once you have added the dependencies to your project all you need to do is to add the `defcon/console.go` or `defcon/console.script` to a collection in your project. The next time you launch your game the console will be running and you should be able to point your browser to `localhost:8098` or `ip_of_your_device:8098` to access the console.
 
