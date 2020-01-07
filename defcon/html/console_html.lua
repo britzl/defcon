@@ -72,7 +72,9 @@ return [[
 				var command = document.getElementById('command').value
 				if (command != "") {
 					send(command);
-					command_history.push(command);
+					if (command_history.length == 0 || command_history[command_history.length - 1] != command) {
+						command_history.push(command);
+					}
 					command_index = 0;
 					document.getElementById('command').value = '';
 				}
