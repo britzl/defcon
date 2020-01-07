@@ -126,7 +126,7 @@ return [[
 </head>
 <body bgcolor="#2D2F31" style="padding: 20px" onload="document.getElementById('command').focus()">
 	<div class="box">
-		<textarea id="log" readonly></textarea>
+		<textarea onkeydown="handlekeydown(event)" id="log" readonly></textarea>
 		<input type="text" id="command" onkeydown="handlekeydown(event)" placeholder="&gt;"/>
 	</div>
 </body>
