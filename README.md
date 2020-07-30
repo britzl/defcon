@@ -46,7 +46,7 @@ You can extend the console with commands of your own.
 #### Commands from module functions
 You can register whole modules and have all functions mapped as commands:
 
-```
+```lua
 local foobar_module = require("foobar_module")
 local console = require("defcon.console")
 console.register_module(foobar_module)
@@ -55,7 +55,7 @@ console.register_module(foobar_module)
 #### Custom commands
 You can also add custom commands:
 
-```
+```lua
 local console = require("defcon.console")
 console.register_command("mycommand", function(args, stream)
 	-- execute command here
@@ -69,7 +69,7 @@ The stream argument is a function that allows the client to stream data instead 
 By default, Lua commands will run with the global table as the [environment](https://www.lua.org/manual/5.1/manual.html#2.9).
 If you need to expand or confine this environment, you can provide a custom table:
 
-```
+```lua
 local console = require("defcon.console")
 local my_env = { foo = "bar" }
 setmetatable(my_env, { __index = _G })
@@ -86,7 +86,7 @@ localhost:8098/download/path/to/myfile
 ## Custom web server routes
 It's possible to add custom web server routes to serve specific content over HTTP:
 
-```
+```lua
 local console = require("defcon.console")
 console.server.router.get("^/greet/(.*)$", function(matches)
 	local path = matches[1]
