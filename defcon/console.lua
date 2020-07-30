@@ -213,7 +213,7 @@ function M.start(port)
 		end
 
 		local name = args[1]
-		local search = { modules, custom_env or _G, package.loaded, { ["_G"] = _G }}
+		local search = { modules, custom_env or _G, package.loaded }
 		for _,t in ipairs(search) do
 			local found = find_in_table(t, name)
 			if found then
