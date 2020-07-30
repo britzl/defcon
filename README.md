@@ -65,6 +65,17 @@ end)
 
 The stream argument is a function that allows the client to stream data instead of returning everything in one go. Call the function with the data to send to the client. Start by sending a header indicating a chunked transfer encoding.
 
+#### Set global environment
+By default, Lua commands will run with the global table as the [environment](https://www.lua.org/manual/5.1/manual.html#2.9).
+If you need to expand or confine this environment, you can provide a custom table:
+
+```
+local console = require("defcon.console")
+local my_env = { foo = "bar" }
+setmetatable(my_env, { __index = _G })
+console.set_environment(my_env) -- foo will now be available to Lua commands and inspect
+```
+
 ## Download files
 The web server also allows you to download files available to your game. If you make an HTTP GET or open your browser to the following URL the specified file will be returned:
 
