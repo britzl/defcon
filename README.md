@@ -46,7 +46,7 @@ You can extend the console with commands of your own.
 #### Commands from module functions
 You can register whole modules and have all functions mapped as commands:
 
-```
+```lua
 local foobar_module = require("foobar_module")
 local console = require("defcon.console")
 console.register_module(foobar_module)
@@ -55,7 +55,7 @@ console.register_module(foobar_module)
 #### Custom commands
 You can also add custom commands:
 
-```
+```lua
 local console = require("defcon.console")
 console.register_command("mycommand", function(args, stream)
 	-- execute command here
@@ -64,6 +64,17 @@ end)
 ```
 
 The stream argument is a function that allows the client to stream data instead of returning everything in one go. Call the function with the data to send to the client. Start by sending a header indicating a chunked transfer encoding.
+
+#### Set global environment
+By default, Lua commands will run with the global table as the [environment](https://www.lua.org/manual/5.1/manual.html#2.9).
+If you need to expand or confine this environment, you can provide a custom table:
+
+```lua
+local console = require("defcon.console")
+local my_env = { foo = "bar" }
+setmetatable(my_env, { __index = _G })
+console.set_environment(my_env) -- foo will now be available to Lua commands and inspect
+```
 
 ## Download files
 The web server also allows you to download files available to your game. If you make an HTTP GET or open your browser to the following URL the specified file will be returned:
@@ -75,7 +86,7 @@ localhost:8098/download/path/to/myfile
 ## Custom web server routes
 It's possible to add custom web server routes to serve specific content over HTTP:
 
-```
+```lua
 local console = require("defcon.console")
 console.server.router.get("^/greet/(.*)$", function(matches)
 	local path = matches[1]

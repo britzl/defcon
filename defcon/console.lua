@@ -16,6 +16,8 @@ local commands = {}
 
 local modules = {}
 
+local custom_env
+
 local function handle_arg(arg)
 	local ok, num = pcall(tonumber, arg)
 	--return ok and num or arg:gsub("\"", "")
@@ -58,6 +60,9 @@ local function handle_command(command_string, stream)
 			local fn = loadstring("return " .. command_string) or loadstring(command_string)
 			if not fn then
 				return "Error: Unable to run " .. command_string
+			end
+			if custom_env then
+				setfenv(fn, custom_env)
 			end
 			result = { fn() }
 		end)
@@ -208,7 +213,7 @@ function M.start(port)
 		end
 
 		local name = args[1]
-		local search = { modules, _G, package.loaded, { ["_G"] = _G }}
+		local search = { modules, custom_env or _G, package.loaded }
 		for _,t in ipairs(search) do
 			local found = find_in_table(t, name)
 			if found then
@@ -326,6 +331,12 @@ function M.register_module(module, name)
 		end
 		return s
 	end)
+end
+
+--- Set the global environment table used for commands ran as Lua code and inspect.
+-- @param env The table to set as environment when running Lua commands.
+function M.set_environment(env)
+	custom_env = env
 end
 
 return M
