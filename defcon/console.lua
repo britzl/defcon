@@ -1,9 +1,9 @@
 local prettify = require "defcon.util.prettify"
 local http_server = require "defnet.http_server"
+local http_router = require "defnet.http_router"
 local utils = require "defcon.util.utils"
 
 local console_html = require "defcon.html.console_html"
-
 
 local M = {}
 
@@ -17,6 +17,12 @@ local commands = {}
 local modules = {}
 
 local custom_env
+
+local router = http_router.create()
+
+-- "fake" server until we've called start()
+M.server = { router = router }
+
 
 local function handle_arg(arg)
 	local ok, num = pcall(tonumber, arg)
@@ -120,7 +126,9 @@ end
 -- @param port The port to listen for commands at
 function M.start(port)
 	port = port or 8098
+
 	M.server = http_server.create(port)
+	M.server.router = router
 
 	-- send print logging as chunked html (for direct streaming to a browser)
 	M.server.router.get("^/log/start$", function(matches, stream)
