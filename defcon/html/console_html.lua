@@ -1,7 +1,9 @@
-return [[
+local M = {}
+
+local header =  [[
 <html>
-<head>
-	<script type="text/javascript">
+<head>]]
+local script = [[<script type="text/javascript">
 		var command_history = [];
 		var command_index = 0;
 		function send(data) {
@@ -91,9 +93,56 @@ return [[
 				}
 				move_cursor_to_end(document.getElementById('command'));
 			}
+			else if (event.keyCode == 9) {
+				event.preventDefault();
+				let command_el = document.getElementById('command')
+				let command = command_el.value
+
+				// Get the last searched command, or store this one.
+				let last_command = localStorage.last_command_text
+				if (last_command == null) {
+					localStorage.last_command_text = command
+					last_command = command
+				}
+
+				// Generate a suggestion.
+				let items = document.getElementById('commands')
+				let suggestions = [];
+				for (const item of items.options) {
+					if (item.value.startsWith(last_command)){
+						var match = last_command + item.value.replace(last_command, "").split(".")[0]
+						suggestions.push(match)
+					}
+				}
+				let unique_suggestions = [...new Set(suggestions)];
+				unique_suggestions.sort()
+				// Increment the index
+				let index = localStorage.last_command_index;
+				index = (index == null) ? 0 : parseInt(index)
+				if (index > unique_suggestions.length - 1) {
+					// If our index is bigger than our suggestion list
+					// restore the command and reset the index.
+					command_el.value = last_command
+					index = -1
+				}
+				else {
+					let new_text = unique_suggestions[index]
+					if (new_text) {
+						command_el.value = new_text
+					}
+				}
+				localStorage.last_command_index = (index + 1).toString()
+			}
+			else if (event.keyCode != 9) {
+				localStorage.removeItem("last_command_text")
+				localStorage.last_command_index = "0"
+			}
 		}
-	</script>
-	<style>
+		window.onbeforeunload = () => {
+			localStorage.clear()
+		}
+	</script>]]
+local style = [[<style>
 		.box {
 			display: flex;
 			flex-flow: column;
@@ -125,12 +174,28 @@ return [[
 			outline: none;
 		}
 	</style>
-</head>
-<body bgcolor="#2D2F31" style="padding: 20px" onload="document.getElementById('command').focus()">
+	</head>
+]]
+local content = [[<body bgcolor="#2D2F31" style="padding: 20px" onload="document.getElementById('command').focus()">
 	<div class="box">
 		<textarea onkeydown="handlekeydown(event)" id="log" readonly></textarea>
 		<input type="text" id="command" onkeydown="handlekeydown(event)" placeholder="&gt;"/>
-	</div>
-</body>
-</html>
-]]
+		%s
+	</div>]]
+		
+local footer = [[</body>
+</html>]]
+
+function M.html(commands)
+	local data_list = ""
+	if next(commands) ~= nil then
+		data_list = [[<datalist id="commands">]]
+		for name, _ in pairs(commands) do
+			data_list = data_list .. [[<option value="]] .. name .. [[" />]]
+		end
+		data_list = data_list .. [[</datalist>]]
+	end
+	return header .. script .. style .. string.format(content, data_list) .. footer
+end
+
+return M
