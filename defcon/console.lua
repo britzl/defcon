@@ -188,7 +188,13 @@ function M.start(port)
 
 	M.register_command("commands", "Show all commands", function()
 		local s = ""
-		for command,command_data in pairs(commands) do
+		local names = {}
+		for command, command_data in pairs(commands) do
+			table.insert(names, command)
+		end
+		table.sort(names)
+
+		for _,command in ipairs(names) do
 			if command:match(".*%..*") ~= command then
 				s = s .. " - " .. command .. "\n"
 			end
