@@ -148,6 +148,10 @@ local style = [[<style>
 			flex-flow: column;
 			height: 100%;
 		}
+		body {
+			background-color: #2D2F31;
+			padding: 2px;
+		}
 		#log {
 			font-family: 'Lucida Console', Monaco, monospace;
 			font-size: 20;
@@ -176,7 +180,7 @@ local style = [[<style>
 	</style>
 	</head>
 ]]
-local content = [[<body bgcolor="#2D2F31" style="padding: 20px" onload="document.getElementById('command').focus()">
+local content = [[<body onload="document.getElementById('command').focus()">
 	<div class="box">
 		<textarea onkeydown="handlekeydown(event)" id="log" readonly></textarea>
 		<input type="text" id="command" onkeydown="handlekeydown(event)" placeholder="&gt;"/>
