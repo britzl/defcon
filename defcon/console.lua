@@ -152,7 +152,8 @@ function M.start(port)
 
 	-- serve the console
 	M.server.router.get("^/$", function()
-		return M.server.html(console_html)
+		
+		return M.server.html(console_html.html(commands))
 	end)
 
 	-- download a file
