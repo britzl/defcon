@@ -7,6 +7,9 @@ local console_html = require "defcon.html.console_html"
 
 local M = {}
 
+M.display_help = true -- if true then the description will be printed next to the command
+M.display_help_max_length = false -- Set to a number if you want to trancutate a line to a max length, adding a `...` suffix
+
 M.print = _G.print
 M.pprint = _G.pprint
 
@@ -122,6 +125,33 @@ local function stop_log()
 	log_streams = {}
 end
 
+local function command_names_meta(source)
+	local names = {}
+	local longest_name = 0
+	for command, command_data in pairs(commands) do
+		if command_data.source == source then
+			longest_name = math.max(#command, longest_name)
+			table.insert(names, command)
+		end
+	end
+	table.sort(names)
+	return {names = names, longest = longest_name}
+end
+
+local function format_command(name, description, longest)
+	if M.display_help then
+		local line = string.format("%-" .. tostring(longest + 2) .. "s %s", name, description)
+		if M.display_help_max_length then
+			local newlen = M.display_help_max_length - 3  -- "..." has a length of 3
+			line = 0 < newlen and newlen < line:len() and line:sub(1, newlen) .. "..." or line:sub(1, M.display_help_max_length)
+		end
+		return " - " .. line .. "\n"
+	else
+		return " - " .. name .. "\n"
+	end
+end
+
+
 --- Start the console
 -- @param port The port to listen for commands at
 function M.start(port)
@@ -188,17 +218,11 @@ function M.start(port)
 
 	M.register_command("commands", "Show all commands", function()
 		local s = ""
-		local names = {}
-		for command, command_data in pairs(commands) do
-			table.insert(names, command)
-		end
-		table.sort(names)
 
-		for _,command in ipairs(names) do
+		local data = command_names_meta("command")
+		for _,command in ipairs(data.names) do
 			local command_data = commands[command]
-			if command_data.source == "command" then
-				s = s .. " - " .. command .. "\n"
-			end
+			s = s .. format_command(command, command_data.description, data.longest)
 		end
 		return s
 	end)
@@ -342,10 +366,10 @@ function M.register_module(module, name)
 	-- add a command to list all the commands of the module
 	M.register_command(name, ("Show the available commands of the %s module"):format(name), function()
 		local s = ""
-		for command,_ in pairs(commands) do
-			if command:match(name .. "%..*") == command then
-				s = s .. command .. "\n"
-			end
+		local data = command_names_meta(name)
+		for _,command in ipairs(data.names) do
+			local command_data = commands[command]
+			s = s .. format_command(command, command_data.description, data.longest)
 		end
 		return s
 	end)
