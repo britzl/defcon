@@ -119,21 +119,27 @@ local script = [[<script type="text/javascript">
 				// Increment the index
 				let index = localStorage.last_command_index;
 				index = (index == null) ? 0 : parseInt(index)
-				if (index > unique_suggestions.length - 1) {
+				let new_index = event.shiftKey ? index - 1 : index + 1
+				if (new_index > unique_suggestions.length) {
 					// If our index is bigger than our suggestion list
 					// restore the command and reset the index.
 					command_el.value = last_command
-					index = -1
+					new_index = 0
+				}
+				else if (new_index <= 0) {
+					// Loop backwards
+					new_index = unique_suggestions.length - Math.abs(new_index)
+					command_el.value = unique_suggestions[new_index - 1]
 				}
 				else {
-					let new_text = unique_suggestions[index]
+					let new_text = unique_suggestions[new_index - 1]
 					if (new_text) {
 						command_el.value = new_text
 					}
 				}
-				localStorage.last_command_index = (index + 1).toString()
+				localStorage.last_command_index = new_index.toString()
 			}
-			else if (event.keyCode != 9) {
+			else if (event.keyCode != 9 && event.keyCode != 16) {
 				localStorage.removeItem("last_command_text")
 				localStorage.last_command_index = "0"
 			}
