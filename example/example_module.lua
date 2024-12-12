@@ -7,7 +7,7 @@ function M.foo()
 end
 
 
-M.bar = "Consectetur adipiscing elit"
+M.bar_desc = "Consectetur adipiscing elit"
 
 function M.bar()
 end
